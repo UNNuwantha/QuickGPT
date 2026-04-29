@@ -5,11 +5,14 @@ import User from "../models/User.js";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const processSession = async (session, response) => {
-    if (!session?.metadata) {
-        return response.json({ received: true, message: "Webhook received but session metadata missing" })
+    const metadata = session?.metadata || session?.payment_intent?.metadata;
+
+    if (!metadata) {
+        console.error('Webhook processing failed: metadata missing', { session })
+        return response.status(400).json({ received: true, message: "Webhook received but session metadata missing" })
     }
 
-    const { transactionId, appId } = session.metadata;
+    const { transactionId, appId } = metadata;
 
     if (appId !== 'quickgpt') {
         return response.json({ received: true, message: "Ignored event: Invalid app" })
@@ -17,13 +20,19 @@ const processSession = async (session, response) => {
 
     const transaction = await Transaction.findOne({ _id: transactionId, isPaid: false })
     if (!transaction) {
+        console.warn('Transaction not found or already processed', { transactionId })
         return response.json({ received: true, message: "Transaction not found or already processed" })
     }
 
-    await User.updateOne({ _id: transaction.userId }, { $inc: { credits: transaction.credits } })
+    const userUpdate = await User.updateOne({ _id: transaction.userId }, { $inc: { credits: transaction.credits } })
+    if (!userUpdate.matchedCount) {
+        console.error('User not found for transaction', { transactionId, userId: transaction.userId })
+        return response.status(500).json({ received: true, message: "User not found for transaction" })
+    }
+
     transaction.isPaid = true;
     await transaction.save();
-    return response.json({ received: true })
+    console.log('Processed transaction successfully', { transactionId, userId: transaction.userId })
 };
 
 export const stripeWebhooks = async (request, response) => {
@@ -50,8 +59,9 @@ export const stripeWebhooks = async (request, response) => {
                     payment_intent: paymentIntent.id,
                 })
 
-                const session = sessionList.data[0];
+                const session = sessionList.data.find((s) => s.metadata?.transactionId) || sessionList.data[0];
                 if (!session) {
+                    console.warn('No checkout session found for payment intent', { paymentIntentId: paymentIntent.id });
                     return response.json({ received: true, message: "No checkout session found for payment intent" })
                 }
 
