@@ -23,6 +23,16 @@ QuickGPT is a **full-stack web application** that brings the power of OpenAI's a
 Whether you're looking to generate creative content, get coding help, or explore AI capabilities, QuickGPT delivers it all with a modern, responsive design.
 
 ---
+![image alt](https://github.com/UNNuwantha/QuickGPT/blob/master/client/src/assets/img1.png?raw=true)
+![image alt](https://github.com/UNNuwantha/QuickGPT/blob/master/client/src/assets/img2.png?raw=true)
+![image alt](https://github.com/UNNuwantha/QuickGPT/blob/master/client/src/assets/img3.png?raw=true)
+![image alt](https://github.com/UNNuwantha/QuickGPT/blob/master/client/src/assets/img4.png?raw=true)
+![image alt](https://github.com/UNNuwantha/QuickGPT/blob/master/client/src/assets/img5.png?raw=true)
+![image alt](https://github.com/UNNuwantha/QuickGPT/blob/master/client/src/assets/img6.png?raw=true)
+![image alt](https://github.com/UNNuwantha/QuickGPT/blob/master/client/src/assets/img7.png?raw=true)
+![image alt](https://github.com/UNNuwantha/QuickGPT/blob/master/client/src/assets/img8.png?raw=true)
+![image alt](https://github.com/UNNuwantha/QuickGPT/blob/master/client/src/assets/img9.png?raw=true)
+![image alt](https://github.com/UNNuwantha/QuickGPT/blob/master/client/src/assets/img10.png?raw=true)
 
 ## 🎯 Key Features
 
