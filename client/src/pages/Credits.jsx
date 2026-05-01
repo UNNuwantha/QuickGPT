@@ -1,15 +1,28 @@
 import React, { useEffect, useState } from 'react'
-import { dummyPlans } from '../assets/assets'
 import Loading from './Loading'
+import { useAppContext } from '../context/AppContext'
+import toast from 'react-hot-toast'
 
 const Credits = () => {
 
   const [plans, setPlans] = useState([])
   const [loading, setLoading] = useState(true)
+  const [purchasing, setPurchasing] = useState(null)
+  const { axios, token, purchasePlan } = useAppContext()
 
   const fetchPlans = async () => {
-    setPlans(dummyPlans)
-    setLoading(false)
+    try {
+      const { data } = await axios.get('/api/credit/plan')
+      if (data.success) {
+        setPlans(data.plans)
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(()=>{
@@ -33,7 +46,11 @@ const Credits = () => {
                 ))}
               </ul>
             </div>
-            <button className='mt-6 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white font-medium py-2 rounded transition-colors cursor-pointer'>Buy Now</button>
+            <button onClick={async () => {
+              setPurchasing(plan._id)
+              await purchasePlan(plan._id)
+              setPurchasing(null)
+            }} disabled={purchasing === plan._id} className='mt-6 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white font-medium py-2 rounded transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'>{purchasing === plan._id ? 'Processing...' : 'Buy Now'}</button>
           </div>
         ))}
       </div>

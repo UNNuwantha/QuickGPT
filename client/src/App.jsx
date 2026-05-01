@@ -9,6 +9,7 @@ import './assets/prism.css'
 import Loading from './pages/Loading'
 import { useAppContext } from './context/AppContext'
 import Login from './pages/Login'
+import { Toaster } from 'react-hot-toast'
 
 
 
@@ -24,6 +25,7 @@ const App = () => {
 
   return (
     <>
+      <Toaster />
       {!isMenuOpen && <img src={assets.menu_icon} className='absolute top-3 left-3 w-8 h-8 cursor-pointer md:hidden not-dark:invert' onClick={() => setIsMenuOpen(true)} />}
 
       {user ? (

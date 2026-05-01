@@ -2,28 +2,81 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { assets } from '../assets/assets'
 import Message from './Message'
+import toast from 'react-hot-toast'
 
 const ChatBox = () => {
 
   const containerRef = useRef(null)
-  
-  const { selectedChat, theme } = useAppContext()
-  const [messages, setMessages] = useState([])
+  const { selectedChat, theme, axios, token, setSelectedChat } = useAppContext()
   const [loading, setLoading] = useState(false)
 
   const [prompt, setPrompt] = useState('')
   const [mode, setMode] = useState('text')
   const [isPublished, setIsPublished] = useState(false)
 
+  const messages = Array.isArray(selectedChat?.messages) ? selectedChat.messages : []
+
   const onSubmit = async (e) => {
     e.preventDefault()
-  }
+    if (!prompt.trim()) return
 
-  useEffect(() => {
-    if (selectedChat) {
-      setMessages(selectedChat.messages)
+    setLoading(true)
+    let currentChat = selectedChat
+
+    if (!currentChat) {
+      try {
+        const { data } = await axios.get('/api/chat/create', { headers: { Authorization: token } })
+        if (!data.success) throw new Error('Unable to create chat')
+
+        const { data: chatsData } = await axios.get('/api/chat/get', { headers: { Authorization: token } })
+        if (!chatsData.success || !Array.isArray(chatsData.chats) || chatsData.chats.length === 0) {
+          throw new Error('Unable to load new chat')
+        }
+
+        currentChat = chatsData.chats[0]
+        setSelectedChat(currentChat)
+      } catch (createError) {
+        toast.error(createError.message || 'Failed to create chat')
+        setLoading(false)
+        return
+      }
     }
-  }, [selectedChat])
+
+    const userMessage = { role: 'user', content: prompt, timestamp: Date.now(), isImage: false }
+    const nextMessages = [...messages, userMessage]
+    setSelectedChat({
+      ...currentChat,
+      messages: nextMessages,
+    })
+    setPrompt('')
+
+    try {
+      const endpoint = mode === 'text' ? '/api/message/text' : '/api/message/image'
+      const requestData = mode === 'text'
+        ? { chatId: currentChat._id, prompt }
+        : { chatId: currentChat._id, prompt, isPublished }
+
+      const { data } = await axios.post(endpoint, requestData, { headers: { Authorization: token } })
+      if (!data.success) {
+        throw new Error(data.message || 'AI failed to generate a response')
+      }
+
+      const aiReply = data.reply
+      const updatedMessages = [...nextMessages, aiReply]
+      setSelectedChat({
+        ...currentChat,
+        messages: updatedMessages,
+      })
+    } catch (sendError) {
+      toast.error(sendError.message || 'Failed to send message')
+      setSelectedChat({
+        ...currentChat,
+        messages,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(()=>{
     if(containerRef.current){
