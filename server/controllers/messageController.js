@@ -31,13 +31,13 @@ export const textMessageController = async (req, res) => {
         });
 
         const reply = { ...choices[0].message, timestamp: Date.now(), isImage: false }
-        res.json({ success: true, reply })
-
         chat.messages.push(reply)
         await chat.save()
 
         await User.updateOne({ _id: userId }, { $inc: { credits: -1 } })
+        const updatedUser = await User.findById(userId).select('credits')
 
+        res.json({ success: true, reply, credits: updatedUser?.credits ?? req.user.credits })
 
     } catch (error) {
         res.json({ success: false, message: error.message })
@@ -89,8 +89,9 @@ export const imageMessageController = async (req, res) => {
         chat.messages.push(reply)
         await chat.save()
         await User.updateOne({ _id: userId }, { $inc: { credits: -2 } })
+        const updatedUser = await User.findById(userId).select('credits')
 
-        res.json({ success: true, reply })
+        res.json({ success: true, reply, credits: updatedUser?.credits ?? req.user.credits })
 
     } catch (error) {
         console.error('Image message error:', error.message)

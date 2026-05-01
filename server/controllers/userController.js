@@ -62,7 +62,7 @@ export const getUser = async (req, res) => {
 }
 
 //API to get published images
-export const getPublishedImages = async () => {
+export const getPublishedImages = async (req, res) => {
     try {
         const publishedImageMessages = await Chat.aggregate([
             { $unwind: "$messages" },
@@ -81,7 +81,7 @@ export const getPublishedImages = async () => {
             }
         ])
 
-        res.json({ success: true, Images: publishedImageMessages.reverse() })
+        return res.json({ success: true, Images: publishedImageMessages.reverse() })
     } catch (error) {
         return res.json({ success: false, message: error.message });
     }

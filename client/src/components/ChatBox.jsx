@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 const ChatBox = () => {
 
   const containerRef = useRef(null)
-  const { selectedChat, theme, axios, token, setSelectedChat } = useAppContext()
+  const { selectedChat, theme, axios, token, setSelectedChat, setUser } = useAppContext()
   const [loading, setLoading] = useState(false)
 
   const [prompt, setPrompt] = useState('')
@@ -67,6 +67,14 @@ const ChatBox = () => {
         ...currentChat,
         messages: updatedMessages,
       })
+
+      if (typeof data.credits === 'number') {
+        setUser((prevUser) => prevUser ? { ...prevUser, credits: data.credits } : prevUser)
+      } else if (selectedChat && requestData.chatId && mode === 'text') {
+        setUser((prevUser) => prevUser ? { ...prevUser, credits: Math.max((prevUser.credits ?? 0) - 1, 0) } : prevUser)
+      } else if (typeof data.credits !== 'number' && mode === 'image') {
+        setUser((prevUser) => prevUser ? { ...prevUser, credits: Math.max((prevUser.credits ?? 0) - 2, 0) } : prevUser)
+      }
     } catch (sendError) {
       toast.error(sendError.message || 'Failed to send message')
       setSelectedChat({
@@ -118,10 +126,31 @@ const ChatBox = () => {
 
       {/* Prompt Input Box */}
       <form onSubmit={onSubmit} className='bg-primary/20 dark:bg-[#583C79]/30 border border-primary dark:border-[#80609F]/30 rounded-full w-full max-w-2xl p-3 pl-4 mx-auto flex gap-4 items-center'>
-        <select onChange={(e) => setMode(e.target.value)} value={mode} className='text-sm pl-3 pr-2 outline-none'>
-          <option className='dark:bg-purple-900' value="text">Text</option>
-          <option className='dark:bg-purple-900' value="image">Image</option>
-        </select>
+        {/* Mode Selection Toggle */}
+        <div className='flex items-center bg-linear-to-r from-purple-100 dark:from-[#3D2463] to-blue-100 dark:to-[#1E3A5F] p-1 rounded-full gap-1'>
+          <button
+            type='button'
+            onClick={() => setMode('text')}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 cursor-pointer ${
+              mode === 'text'
+                ? 'bg-linear-to-r from-[#A456F7] to-[#3D81F6] text-white shadow-lg'
+                : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+            }`}
+          >
+            ✏️ Text
+          </button>
+          <button
+            type='button'
+            onClick={() => setMode('image')}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 cursor-pointer ${
+              mode === 'image'
+                ? 'bg-linear-to-r from-[#A456F7] to-[#3D81F6] text-white shadow-lg'
+                : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+            }`}
+          >
+            🎨 Image
+          </button>
+        </div>
         <input onChange={(e) => setPrompt(e.target.value)} value={prompt} type="text" placeholder='Type your prompt here...' className='flex-1 w-full text-sm outline-none' required />
         <button disabled={loading}>
           <img src={loading ? assets.stop_icon : assets.send_icon} className='w-8 cursor-pointer' alt="" />
